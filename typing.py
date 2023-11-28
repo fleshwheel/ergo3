@@ -2,11 +2,12 @@
 # -*- encoding: utf-8 -*-
 
 types = {
+    "any": lambda: lambda o: True,
     "num": lambda: lambda o: o.ergo_type == "num",
     "str": lambda: lambda o: o.ergo_type == "str",
     "list": lambda t: lambda o: all([types[t] == o.ergo_type]),
     "func": lambda d, c: lambda o: (self.domain == d) and (self.codomain == c),
-    "null": lambda: lambda o: o.type == "null"
+    "null": lambda: lambda o: o.ergo_type == "null"
 }
 
 class ImpossibleTypeException(Exception):
@@ -21,11 +22,21 @@ def type_compare(signature, value):
         # here is where i will enable function-like types
         pass
     else:
-        return types[signature]()(value)
+        if signature in types:
+            return types[signature]()(value)
+        else:
+            raise TypeError("ergo > typing: unknown type \"" + signature + "\"")
 
 # base type
 class ErgonomicaType:
     pass
+
+class Symbol(ErgonomicaType):
+    def __init__(self, name):
+        self.name = name
+    def __repr__(self):
+        return "Symbol(" + self.name + ")"
+        
 
 class Null(ErgonomicaType):
     ergo_type = "null"
@@ -45,21 +56,34 @@ class Num(ErgonomicaType):
             raise TypeError("Number must be instantiated with a value either of type `int` or `float`.")
     def __repr__(self):
         return "Num(" + str(self.value) + ")"
+    def __str__(self):
+        return str(self.value)
         
 class Str(ErgonomicaType, str):
     ergo_type = "str"
-    pass
+    def __init__(self, value):
+        if isinstance(value, str):
+            self.value = value
+        else:
+            raise TypeError("Str must be instantiated with a value of type `str`.")
+    
+    def __str__(self):
+        return self.value
 
-class FunctionType:
-    ergo_type = "func"
-    def __init__(self, *args):
-        self.domain = args[:-1]
-        self.codomain = args[-1]
+class Function:
+    def __init__(self, domain, codomain, obj):
+        self.domain = domain
+        self.codomain = codomain
+        self.obj = obj
+        self.ergo_type = ("func", self.domain, self.codomain)
+    def __repr__(self):
+        return "Function(" + str(self.domain) + " -> " + str(self.codomain) + ")"
 
-class ListType:
-    ergo_type = "list"
-    def __init__(self, t):
+class List:
+    def __init__(self, t, values):
         self.t = t
+        self.values = values
+        self.ergo_type = ("list", t)
 
 class DictType:
     ergo_type = "dict"

@@ -75,7 +75,8 @@ def parse(tokens, allow_unclosed_blocks=False):
                     if token.startswith("'") or token.startswith("\""):
                         parsed_tokens.append(Str(token.encode().decode("unicode-escape")[1:-1]))
                     else:
-                        raise SyntaxError(token)
+                        parsed_tokens.append(Symbol(token))
+#                        raise SyntaxError(token)
                         #parsed_token = token.encode().decode('unicode-escape')
                         #if parsed_token.startswith('-'):
                         #    parsed_token = Flag(parsed_token)
